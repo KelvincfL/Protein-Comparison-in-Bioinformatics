@@ -1,0 +1,319 @@
+\documentclass[10pt]{article}
+%\usepackage{url}
+%\usepackage{algorithmic}
+\usepackage[margin=1in]{geometry}
+\usepackage{datetime}
+\usepackage[margin=2em, font=footnotesize]{caption}
+\usepackage{graphicx}
+\usepackage{mathpazo} % use palatino
+\usepackage[scaled]{helvet} % helvetica
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{subfigure}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{ amssymb }
+% Letterspacing macros
+\newcommand{\spacecaps}[1]{\textls[200]{\MakeUppercase{#1}}}
+\newcommand{\spacesc}[1]{\textls[50]{\textsc{\MakeLowercase{#1}}}}
+\lstdefinestyle{myCustomMatlabStyle}{
+  language=Python,
+  stepnumber=1,
+  numbersep=10pt,
+  tabsize=4,
+  showspaces=false,
+  showstringspaces=false
+}
+\lstset{basicstyle=\footnotesize,style=myCustomMatlabStyle}
+\title{\flushleft2.4 Sensitivity of Optimisation Algorithms to Initialisation\\ }
+\date{}
+\usepackage{dsfont}
+\usepackage{varwidth}
+\usepackage{float}
+\usepackage{bm}
+\usepackage{mathtools}
+
+\begin{document}
+\hfill\framebox{\parbox[t][5 true cm][c]{11 true cm}
+{\hfil Space for project label}}
+\section*{\LARGE{9.3 Protein Comparison in Bioinformatics}}
+\section*{1 The Edit Distance}
+\underline{Definitions:}\\
+\textit{S} and \textit{T} are strings of length \textit{m} and \textit{n} respectively.\\
+We write $S_i$ for the \textit{i}th caracter of \textit{S}, and $S[i,j]$ for the substring $S_i,\dots,S_j$.\\
+The \textit{optimal} edit transcripts are those that involve the least number of edit operations (\textbf{R}eplace, \textbf{I}nsert, \textbf{D}elete).\\
+The \textit{edit distance} $d(S,T)$ is defined to be the minimal number of edits between \textit{S} and \textit{T}.\\
+And we let $D(i,j)=d(S[1,i],T[1,j])$.
+\subsection*{Question 1}
+Assume that we have a string \textit{S} of length $i$ and a string \textit{T} of length $j$. We consider the different cases depending on the last letter of both strings.\\
+Then for $i,j>0$,
+\begin{itemize}
+    \item \textbf{case 1: $S_i=T_j$}
+    \begin{itemize}
+    \item Then we ignore the last character, and no extra operations needs to be done,\\ so $D(i,j)=D(i-1,j-1)$
+    \end{itemize}
+    \item \textbf{case 2: $S_i \neq T_j$}
+    \begin{itemize}
+        \item Then we can try either of the three operations and see which one is more optimal in edit distance.
+        \begin{enumerate}
+            \item Replace: we can replace $S_i$ with $T_j$ and we again obtain the same situation as in case 1. Hence, we ignore last character and $D(i,j)=1+D(i-1,j-1)$.
+            \item Insert: we can insert a character equal to $T_j$ to the end of $S$, so now $S$ has the length $i+1$. We now obtain the same situation as in case 1, hence we ignore last character and $D(i,j)= 1 + D(i,j-1)$.
+            \item Delete: we can delete $S_i$ and we have $D(i,j)=1+D(i-1,j)$.
+        \end{enumerate}
+        \item we can then find the optimal edit distance by taking the minimum of these three choices.
+    \end{itemize}
+\end{itemize}
+Therefore, we get
+\[D(i,j)=min\{D(i-1,j)+1,\,D(i,j-1)+1,\,D(i-1,j-1)+s(S_i,T_j)\}\]
+\[  s(S_i,T_j)=
+    \begin{dcases}
+        0 & S_i = T_j \\
+        1 & S_i \neq T_j\\
+    \end{dcases}
+\]
+\newpage
+\noindent We are left to consider the boundary conditions when $i,j$ reaches $0$, and we'd be done with the recursion equation.
+\begin{itemize}
+    \item $D(0,0)=0$ -two empty strings are the same
+    \item $D(i,0)=i$ -all characters from $S$ will be removed
+    \item $D(0,j)=j$ -all characters from $T$ will be inserted into $S$
+\end{itemize}
+\bigskip
+\subsection*{Question 2}
+We use the following script to find the edit distance.
+\begin{lstlisting}
+import edit_distance as *
+D = edit_distance_without_transcript('sheshells', 'seashells')
+print(D[-1][-1])
+\end{lstlisting}
+The function used above can be found in the programs section under the title \emph{'i) edit\textunderscore distance.py'}.\\\\
+The edit distance is \underline{$\bm{3}$} for \underline{shesells} and \underline{seashells}.\\
+The spatial complexity of the algorithm above is $\mathcal{O}(mn)$ as it has a table $D$ to store the results of size $m*n$ and two extra constants $m$ and $n$.\\
+In the algorithm, we used a for loop with $m$ iterations from $i=0,\dots,m$, and in each iteration, we used another for loop with $n$ iterations from $j=0,\dots,n$. At each individual iteration, we are doing:
+\begin{itemize}
+    \item 1 comparison and 1 assignment if $S[i]=T[j]$
+    \item otherwise we are doing 3 comparisons, 3 additions and 1 assignment
+\end{itemize}
+These are all $\mathcal{O}(1)$ operations.\\
+Hence, time complexity of the algorithm is $m\times n \times \mathcal{O}(1)=\mathcal{O}(mn)$
+\bigskip
+\subsection*{Question 3}
+The script used to get the results is 
+\begin{lstlisting}
+from edit_distance import *
+from proteins import *
+
+results = edit_distance_without_transcript(A, B)
+print(results[-1][-1])    #edit_distance
+trace = backtrace(A, B)
+print(trace[:50])   #first 50 steps of an optimal alignment
+\end{lstlisting}
+The functions used within can be found in the programs section under the title \emph{'i) edit\textunderscore distance.py'};\\ and the proteins data given on CATAM website can be found in the files section under the title \emph{'ii) proteins.py'}.\\\\
+The edit distance is \underline{$\bm{83}$} and the first 50 steps of an optimal alignment is\\ \underline{\textit{MDDRMDDRRRMMMRMMRMMRMRRRRMRRMMRMMMMRMMMMRRRMRMMRMR}}.\\
+
+\newpage
+\section*{2 Scoring Matrix}
+\subsection*{Question 4}
+The script used to get the results below is
+\begin{lstlisting}
+from edit_distance_with_scoring_matrix import *
+from proteins import *
+from BLOSUM_matrix import *
+
+results = edit_distance_without_transcript(A, B, -8, -8, blosum)
+print(results[-1][-1][0])    #max score
+trace = backtrace(A, B, -8, -8, blosum)
+print(trace[:50])   #first 50 steps of an optimal alignment
+\end{lstlisting}
+The functions used above can be found in the programs section under \emph{'ii) edit\textunderscore distance\textunderscore with\textunderscore scoring\textunderscore matrix.py'}. (The name of the function is the same as in programs used in section 1 but with extra arguments)\\
+The data files used above can be found in the files section under \emph{'i) BLOSUM\textunderscore matrix.py'} and \emph{'ii) proteins.py'} respectively. The Blosum file is equivalent to the ersion on CATAM website but I wrote it as a dictionary in python.\\\\
+The max score for proteins $A$ and $B$ is \underline{\textbf{290}} and the first 50 steps of the optimal transcript is\\
+\underline{\textit{MDDRMDDRRRMMMRMMRMMRMRRRRMRRMMRMMMMRMMMMRRRMRMMRMR}}.\\
+
+\section*{3 Scoring for Gaps}
+\subsection*{Question 5}
+We note the that this is a generalisation of the methods we've developed in previous questions where $E(i,j)$ is the insertion of sequence of amino acids of S, $F(i,j)$ is the deletion of sequence of amino acids of S and G is the replacement of $S_i$ with $T_j$. Hence, the boundary conditions are:
+\begin{itemize}
+    \item $V_{gap}(0,0)=0$
+    \item $V_{gap}(0,j)=V_{gap}(i,0)=u$ where $i,j>0$. This is because $\forall l\geq1$, we have $w(l)=u$, which means the weighted cost to delete or insert a string of length $i/j$ is $u$ for all $i$ and $j$.
+\end{itemize}
+Furthermore, note that $w(l)=u$ for all values of $l\geq1$ implies
+\begin{flalign*}
+E(i,j)&=max_{0\leq k\leq j-1}\{V_{gap}(i,k)+u\}&\\
+&=max\{max_{0\leq k\leq j-2}V_{gap}(i,k)+u, V_{gap}(i,j-1)+u\}\\
+&= \underline{max\{E(i,j-1),V_{gap}(i,j-1)+u\}}\quad (1)\\ 
+\intertext{Similarly, we can rewrite equation for $F(i,j)$ as}
+F(i,j)&= \underline{max\{F(i-1,j),V_{gap}(i-1,j)+u\}} \quad (2)
+\end{flalign*}
+Therefore, we require further boundary conditions on $E(i,0)$ and $F(0,j)$, and we can set \underline{$E(i,0)=F(0,j)=2u$}. Whilst $E(i,0)$ and $F(0,j)$ are not well defined since we can't edit a sequence of length i to make it length 0 through insertion nor can we edit a sequence length 0 to make it length i through deletion. The purpose of these boundary conditions is to make sure such that $E(i,0)=V_{gap}(i,0)+u$ and $F(0,j)=V_{gap}(0,j)+u$, so the values of $E(i,1)$ and $F(1,j)$ are correct. (In fact setting $E(i,0)$ and $F(0,j)$ to any value $\leq 2u$ would work too)\\
+The algorithm works by initialising tables $E,F,Vgap$ which stores results of $E(i,j),F(i,j)$ and $V_{gap}(i,j)$ respectively. These tables would all have size $(m+1)\cdot (n+1)$. Then using the boundary conditions described above, we set up two for loops iterating through array of $(i,j)$,i.e. a for loop for $i=1,\dots,m$ and in each iteration of the $i$ loop, there's a for loop for $j=1,\dots,n$, so there are $mn$ individual iterations. In each such iteration, we calculate $E(i,j)$ and $F(i,j)$ using formula (1) and (2) listed above, where we need to perform 1 addition and 1 comparison. We then calculate $G(i,j)$ explicitly, which requires 1 addition; and we finally compare $E(i,j),F(i,j)$ and $G(i,j)$ to find $V_{gap}(i,j)$, which requires 2 comparisons. The result we need is just $Vgap(m,n)$.\\
+Hence, time complexity at each iteration is $\mathcal{O}(1)$. Therefore, time complexity for the algorithm is $mn \times \mathcal{O}(1)=\mathcal{O}(mn)$.\\
+The implementation of this algorithm is can be found in the programs section under \emph{'iii) edit\textunderscore distance\textunderscore with\textunderscore gaps.py'}.
+
+\subsection*{Question 6}
+The script used to get the results is
+\begin{lstlisting}
+from edit_distance_with_gaps import *
+from proteins import *
+from BLOSUM_matrix import *
+
+results = edit_distance_without_transcript(C, D, -12, blosum)
+print(results[-1][-1][0])
+print(backtrace(C,D,-12,blosum)[:50])
+\end{lstlisting}
+The functions used above can be found in the programs section under \emph{'iii) edit\textunderscore distance\textunderscore with\textunderscore gaps.py'}. (The name of the functions is the same as in programs used in section 1,2 but from different files)\\
+The data files used above can be found in the files section under \emph{'i) BLOSUM\textunderscore matrix.py'} and \emph{'ii) proteins.py'} respectively.\\\\
+The score for proteins C and D is \underline{1236} and the first 50 steps of the optimal transcript is \\ \underline{MMDDDDDDDDDDDDDDDDDDDDDMRRRMRRRRRMRRDRMRRRRMRRMMRD}.
+
+
+\section*{4 Statistical Significance}
+\subsection*{Question 7}
+$U^n$ and $V^n$ are independent and identically distributed. The score of inserting/deleting a sequence of length l is fixed: $w(l)=u$ for all $l\geq 1$.\\
+We first consider what $\mathds{E}(v_{gap}(U^1,V^1))$ is. We observe that there are four possible cases:
+\begin{flalign*}
+&\left
+\{\begin{array}{lr}
+U=a,V=a;\\
+U=a,V=b;\\
+U=b,V=a;\\
+U=b,V=b
+\end{array}
+\right.&\\
+\intertext{Since $u\leq0$, $v_{gap}(U^0,V^0)=0$ and $v_{gap}(U^1,V^0)=v_{gap}(U^0,V^1)=u$, we get}
+&\left
+\{\begin{array}{lr}
+v_{gap}(a,a)=max(2u,2u,1)=1\\
+0\geq v_{gap}(a,b)=max(2u,2u,-1)\geq-1;\\
+0\geq v_{gap}(b,a)=max(2u,2u,-1)\geq-1;\\
+v_{gap}(b,b)=1
+\end{array}
+\right.
+\end{flalign*}
+Hence,
+\begin{flalign*}
+\mathds{E}(v_{gap}(U^1,V^1))&=p^2+(1-p)^2 + 2p(1-p)\cdot max(2u,-1)&\\
+&\geq(p-(1-p))^2\\
+&=(2p-1)^2\geq0
+\end{flalign*}
+We then observe
+\begin{flalign*}
+\mathds{E}(v_{gap}(U^n,V^n))&=\mathds{E}(max\{E(U^n,V^n),F(U^n,V^n),G(U^n,V^n)\})&\\
+&\geq \mathds{E}(G(U^n,V^n))\\
+&= \mathds{E}(v_{gap}(U^{n-1},V^{n-1})+s(U^n_n,V^n_n))\\
+&= \mathds{E}(v_{gap}(U^{n-1},V^{n-1})) + (2p-1)^2
+\end{flalign*}
+Therefore, $\mathds{E}(v_{gap}(U^n,V^n))\geq n(2p-1)^2$. This implies that \[\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n}\geq (2p-1)^2\]
+and therefore \[\liminf_{n\to \infty}\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n}\geq (2p-1)^2\geq 0 \qquad \text{for $0\leq p\leq1$}\]
+What we've shown above is that if we use replacement only, the the $\mathds{E}(v_{gap}(U^n,V^n))=n(2p-1)^2$. And this would be a sufficient lower bound for all $p\neq \frac{1}{2}$.\\
+However, we note that this lower bound can be further optimised. We do this by noting that for string segments $(U^{1-2u},V^{1-2u})$, the $v_{gap}$ score is always $\geq 2u$, since we can delete $U^{1-2u}$ and insert $V^{1-2u}$, which has a score of $2u$. We note that this method of operations is better than pure replacement if all $1-2u$ letters are not matched by $1$. (since $(1-2u)$ non-matched letter has a replacement score of $(2u-1)$)\\
+So we can divide the strings into $\lfloor \frac{n}{1-2u}\rfloor$ disjoint sections, each of length $(1-2u)$, and check if they are made of only non-matching letters. The probability of this happening is $(2p(1-p))^{1-2u}$, and if they do we can increase the $v_{gap}$ score by $1$.\\
+Therefore, we can update our lower bound as 
+\begin{flalign*}
+\mathds{E}(v_{gap}(U^n,V^n)) &\geq n(2p-1)^2 + 1 \times \lfloor \frac{n}{1-2u}\rfloor \times \mathds{E}(\mathds{1}_{\text{$1-2u$ consecutive non matched letters}})&\\
+&\geq n(2p-1)^2 + \lfloor \frac{n}{1-2u}\rfloor \times (2p(1-p))^{1-2u}\\
+&\geq n(2p-1)^2 + (\frac{n}{1-2u}-1) \times (2p(1-p))^{1-2u}\\
+\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n} &\geq (2p-1)^2 + \frac{(2p(1-p))^{1-2u}}{1-2u} - \frac{1}{n}(2p(1-p))^{1-2u}\\
+\liminf_{n\to \infty}\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n} 
+&\geq  (2p-1)^2 + \frac{(2p(1-p))^{1-2u}}{1-2u} - \liminf_{n\to \infty}(\frac{1}{n}(2p(1-p))^{1-2u})
+\end{flalign*}
+Therefore, we may conclude that 
+\[\liminf_{n\to \infty}\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n} 
+\geq  (2p-1)^2 + \frac{(2p(1-p))^{1-2u}}{1-2u}\]
+because $\liminf_{n\to \infty}(\frac{1}{n}(2p(1-p))^{1-2u})=0$.\\
+We note further $(2p-1)^2 + \frac{(2p(1-p))^{1-2u}}{1-2u} > 0$ for $p=\frac{1}{2}$, therefore $\forall p \in [0,1]$, 
+\[\liminf_{n\to \infty}\frac{\mathds{E}(v_{gap}(U^n,V^n))}{n} > 0\]
+
+\subsection*{Question 8}
+The script used to find the limit can be found in the programs section under the title \emph{'iv) limit\textunderscore score.py'}. \\
+By law of large number, we know that $\frac{1}{m}\sum_{i=1}^m v_{gap}(U^n_i,V^n_i)=\mathds{E}(v_{gap}(U^n,V^n))$, where $(U^n_i,V^n_i)$ are iid copies of $(U^n,V^n)$. So we can use Monte Carlo method, i.e. generate a large, random sample of $(U^n,V^n)$ and find their average to estimate $\mathds{E}(v_{gap}(U^n,V^n))$.\\
+In my code, I used $m=500$ since this is a good balance between accuracy of $\mathds{E}(v_{gap}(U^n,V^n))$ and calculation time. And I tested this on a range of values of n, which are $(500, 1000, 1500, 2000, 2500)$. This is only to see the limit is roughly converging to. The results were $(0.420305,0.429393,0.432768,0.434200,0.435565)$. So the sequence is increasing.\\
+I then tested with $n=5000$ and $m=500$, and the result was 0.438335. Calculating the difference between the expected score of different $n$, we note a significant decrease in the rate of change of the score.\\
+When $n$ increases from $500$ to $1000$, the score increases by roughly $0.0090$, when $n$ increases from $1000$ to $2000$, the score increases by roughly $0.0050$. However, as $n$ increases from $2500$ to $5000$, the score only increases by roughly $0.00277$. So a very rough pattern is that when $n$ is doubled, the score increases by roughly $\frac{5}{9}$ of the previous increment.\\
+$\sum_{n=1}^{\infty}(\frac{5}{9})^n=\frac{9}{4}-1=1.25$, hence, the limit of $n^{-1}\mathds{E}(V_{gap}(U^n,V^n))$ is around $0.438335+1.25*0.00277=0.4417975$. This should be accurate to 2d.p., so we get
+\[\liminf_{n\to\infty} n^{-1}\mathds{E}(V_{gap}(U^n,V^n))\approx0.44\]
+
+\section*{5 Local Alignment}
+\subsection*{Question 9}
+RHS = max\{$v_{sfx}(S',T'):S'$ a prefix of $S$, $T'$ a prefix of $
+T\}$\\
+$=max\{max\{v(S'',T''):$ $S''$ a suffix of $S'$, $T''$ a suffix of $T'$\} :$S'$ a prefix of $S$, $T'$ a prefix of $T$\}\\\\
+To show that RHS = LHS = $v_{sub}(S,T)$, we need to show any pair of substrings of $S,T$ can be written as some $(S'',T'')$ such that $S''$ a suffix of $S'$, $T''$ a suffix of $T'$, $S'$ a prefix of $S$, $T'$ a prefix of $T$. We also need to show that all such $(S'',T'')$ are substrings of $S,T$.\\\\
+Let $S,T$ be strings of length $m,n$ respectively. Consider an arbitrary pair of substrings, $S(i,j)$ and $T(k,l)$, we note that we can write $S(i,j)$ as a suffix of $S(1,j)$ which is a prefix of $S$. Similarly, we can write $T(k,l)$ as a suffix of $T(1,l)$ which is a prefix of $T$. Therefore, all pairs of substrings of $S$, $T$ can be written as $(S'',T'')$.\\
+This implies $v_{sub}(S,T) \leq$ max\{$v_{sfx}(S',T'):S'$ a prefix of $S$, $T'$ a prefix of $T\}$, since the set of pairs of substrings of $S,T$ is a subset of the set of $(S'',T'')$.\\\\
+On the other hand, let $S'$ be an arbitrary prefix $S(1,j)$ and $T'$ an arbitrary prefix $T(1,l)$. Then $S''$ is a suffix of $S'$, =$S(i,j)$ for some $i=1,\dots,j$ and $T''$ is a suffix of $T'$, =$T(k,l)$ for some $k=1,\dots,l$. Therefore, the set of $(S'',T'')$ is a subset of the set of pairs of substrings of $S,T$.\\
+This implies $v_{sub}(S,T) \geq$ max\{$v_{sfx}(S',T'):S'$ a prefix of $S$, $T'$ a prefix of $T\}$\\\\
+Combining these two, we get \underline{$v_{sub}(S,T)$ = max\{$v_{sfx}(S',T'):S'$ a prefix of $S$, $T'$ a prefix of $T\}$}
+
+\subsection*{Question 10}
+$V_{sfx}(i,j)=v_{sfx}(S[1,i],T[1,j])=max_{k,l}(S[k,i],T[l,j])$, where $1\leq k \leq i$ and $1 \leq l \leq j$. And we let the pair of the longest suffixes (i.e. where $i-k+j-l$ is maximised) that gives the maximum be $(S[k',i],T[l',j])$.\\ If one or both of these suffixes is an empty suffix, then $V_{sfx}(i,j)=0$. Else, both are non empty suffixes. And we know that there are three possible operations to edit a substring, namely insertion, deletion or replacement. So we get:
+\begin{itemize}
+    \item Insertion\\
+    $v(S[k',i],T[l',j])=v(S[k',i],T[l',j-1])+s(-,T_j)$
+    \item Deletion\\
+    $v(S[k',i],T[l',j])=v(S[k',i-1],T[l',j])+s(S_i,-)$
+    \item Replacement\\
+    $v(S[k',i],T[l',j])=v(S[k',i-1],T[l',j-1])+s(S_i,T_j)$
+\end{itemize}
+We now make the importance observation that if $(S[k',i],T[l',j])$ is the longest maximum pair of suffixes for $(S[1,i],T[1,j])$, then $(S[k',i],T[l',j-1])$ must also be the longest maximum pair of suffixes for $(S[1,i],T[1,j-1])$.\\
+To show this, assume it's not, then the pair must include at least one of $S[k'-1]$ or $T[l'-1]$, but then $(S[k',i],T[l',j])$ would no longer be the maximum pair of suffixes that's the longest for $(S[1,i],T[1,j])$ which is a contradiction.\\
+The same deduction can be used for $(S[1,i-1],T[1,j])$ and $(S[1,i-1],T[1,j-1])$ as well.\\
+Therefore, we can conclude that if the following operations took place then:
+\begin{itemize}
+    \item Insertion\\
+    $V_{sfx}(i,j)=V_{sfx}(i,j-1)+s(-,T_j)$
+    \item Deletion\\
+    $V_{sfx}(i,j)=V_{sfx}(i-1,j)+s(S_i,-)$
+    \item Replacement\\
+    $V_{sfx}(i,j)=V_{sfx}(i-1,j-1)+s(S_i,T_j)$
+\end{itemize}
+We choose the operation that can maximise $V_{sfx}(i,j)$, but if none of the three operations provides a positive score, we may just take 2 empty suffixes which has a score of 0. Therefore, \[V_{sfx}(i,j)=max\left
+\{\begin{array}{lr}
+0,\\
+V_{sfx}(i-1,j-1)+s(S_i,T_j),\\
+V_{sfx}(i-1,j)+s(S_i,-),\\
+V_{sfx}(i,j-1)+s(-,T_j)
+\end{array}
+\right.\]
+For boundary conditions, we note that since $S(-,a)=S(a,-)<0$, for $(S[1,i],0)$ and $(0,T[1,j])$, the suffixes that maximises the score is the empty suffixes. Hence $V_{sfx}(i,0)=V_{sfx}(0,j)=0$
+
+
+\subsection*{Question 11}
+To find $v_{sub}$, it is sufficient to find the maximum of $V_{sfx}(i,j)$ for $1\leq i \leq m, 1\leq j\leq n$ as defined in question 10, since $V_{sfx}(i,j)$ is the $v_{sfx}$ score for the pair of prefixes $(S[1,i],T[1,j])$. And by question 9, $v_{sub}(S,T)$ = max\{$v_{sfx}(S',T'):S'$ a prefix of $S$, $T'$ a prefix of $T\}$.\\
+The script to get the results is
+\begin{lstlisting}
+from edit_distance_with_local_alignment import *
+from proteins import *
+from BLOSUM_matrix import *
+
+result = v_sub(C, D, -2, -2, blosum)
+print(result)
+\end{lstlisting}
+The function used above is called 'v\textunderscore sub' and it can be found in the programs section under \emph{'v) edit\textunderscore distance\textunderscore with\textunderscore local \textunderscore alignment.py'}.\\\\
+The $v_{sub}$ score for proteins C and D is \underline{1312}.
+
+
+\newpage
+\section*{Files}
+\subsection*{i) BLOSUM\textunderscore matrix.py}
+\input{files/BLOSUM_matrix}
+\subsection*{ii) proteins.py}
+\input{files/proteins}
+\bigskip\bigskip\bigskip
+\newpage
+\section*{Programs}
+\bigskip
+\subsection*{i) edit\textunderscore distance.py}
+\input{functions/edit_distance.tex}
+\newpage
+\subsection*{ii) edit\textunderscore distance\textunderscore with\textunderscore scoring\textunderscore matrix.py}
+\input{functions/edit_distance_with_scoring_matrix}
+\newpage
+\subsection*{iii) edit\textunderscore distance\textunderscore with\textunderscore gaps.py}
+\input{functions/edit_distance_with_gaps}
+\newpage
+\subsection*{iv) limit \textunderscore score.py}
+\input{functions/limit_score}
+\bigskip\bigskip
+\subsection*{v) edit\textunderscore distance\textunderscore with\textunderscore local\textunderscore alignment.py}
+\input{functions/edit_distance_with_local_alignment}
+\end{document}
